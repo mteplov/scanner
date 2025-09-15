@@ -12,24 +12,32 @@ HOST="$4"
 
 # Проверка прав root
 if [[ $EUID -ne 0 ]]; then
-    echo "Запуск только из под root запускай через sudo"
+    echo "Запуск только из под root — запускай через sudo"
     exit 1
 fi
 
 # Проверка обязательных аргументов
-[[ -z "$PREFIX" ]] && { echo "\$PREFIX must be passed"; exit 1; }
-[[ -z "$INTERFACE" ]] && { echo "\$INTERFACE must be passed"; exit 1; }
+[[ -z "$PREFIX" ]] && { echo "Необходимо указать ПРЕФИКС"; exit 1; }
+[[ -z "$INTERFACE" ]] && { echo "Необходимо указать ИНТЕРФЕЙС"; exit 1; }
 
-# Проверка формата PREFIX (два октета)
-if [[ ! "$PREFIX" =~ ^([0-9]{1,3})\.([0-9]{1,3})$ ]]; then
-    echo "PREFIX must be in format x.x where x is 0-255"
+# Проверка формата PREFIX (два октета) и диапазонов 0-255
+if [[ "$PREFIX" =~ ^([0-9]{1,3})\.([0-9]{1,3})$ ]]; then
+    oct1=${BASH_REMATCH[1]}
+    oct2=${BASH_REMATCH[2]}
+    # Проверяем числовой диапазон каждого октета
+    if (( oct1 < 0 || oct1 > 255 || oct2 < 0 || oct2 > 255 )); then
+        echo "Октеты ПРЕФИКСА должны быть числами от 0 до 255  (получено: $oct1.$oct2)"
+        exit 1
+    fi
+else
+    echo "ПРЕФИКС должен быть в формате x.x, где x — число от 0 до 255"
     exit 1
 fi
 
 # Проверка SUBNET (если передан)
 if [[ -n "$SUBNET" ]]; then
     if ! [[ "$SUBNET" =~ ^([0-9]{1,3})$ ]] || ((SUBNET < 0 || SUBNET > 255)); then
-        echo "SUBNET must be a number 0-255"
+        echo "ПОДСЕТЬ должна быть числом от 0 до 255"
         exit 1
     fi
 fi
@@ -37,7 +45,7 @@ fi
 # Проверка HOST (если передан)
 if [[ -n "$HOST" ]]; then
     if ! [[ "$HOST" =~ ^([0-9]{1,3})$ ]] || ((HOST < 1 || HOST > 254)); then
-        echo "HOST must be a number 1-254"
+        echo "ХОСТ должен быть числом от 1 до 254"
         exit 1
     fi
 fi
